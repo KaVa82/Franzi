@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Franziskas Geschichtenwelt</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap');
+        
+        :root {
+            --gold: #d4af37;
+            --gold-light: #f4e4bc;
+            --gold-dark: #997b26;
+            --parchment: #fdf6e3;
+            --parchment-dark: #eee8d5;
+            --ink: #2c241b;
+            --ink-light: #5c4d3c;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            background: var(--ink);
+            min-height: 100vh;
+            color: var(--ink);
+            overflow-x: hidden;
+            background-image: url('https://www.transparenttextures.com/patterns/aged-paper.png');
+            background-blend-mode: overlay;
+        }
+        
+        .background-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center;
+            opacity: 0.15; z-index: -2; transition: opacity 1s;
+            filter: grayscale(80%) sepia(20%);
+        }
+        
+        .gold-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, rgba(212,175,55,0.05) 0%, rgba(44,36,27,0.5) 100%);
+            z-index: -1; pointer-events: none;
+        }
+        
+        .header {
+            text-align: center; padding: 20px;
+            background: rgba(44,36,27,0.95);
+            border-bottom: 3px solid var(--gold);
+            position: sticky; top: 0; z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+        .header h1 { font-family: 'Cinzel', serif; font-size: 1.6em; color: var(--gold); letter-spacing: 2px; margin-bottom: 5px; }
+        .header p { color: var(--gold-light); font-style: italic; font-size: 0.9em; }
+        
+        .nav {
+            display: flex; justify-content: center; gap: 5px; padding: 10px;
+            background: rgba(44,36,27,0.9); border-bottom: 1px solid var(--gold-dark); flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: transparent; border: 1px solid var(--gold);
+            padding: 10px 15px; cursor: pointer;
+            font-family: 'Cinzel', serif; color: var(--gold);
+            transition: all 0.3s; font-size: 0.85em; text-transform: uppercase;
+        }
+        .btn.active { background: var(--gold); color: var(--ink); }
+        .btn:disabled { opacity: 0.4; border-color: var(--ink-light); color: var(--ink-light); }
+        
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; padding-bottom: 80px; }
+        .section { display: none; animation: fadeIn 0.6s ease-out; }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .panel {
+            background: rgba(253, 246, 227, 0.95); border: 3px double var(--gold);
+            padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            background-image: url('https://www.transparenttextures.com/patterns/cream-paper.png');
+        }
+        
+        .story-envelope {
+            background: linear-gradient(135deg, var(--parchment) 0%, var(--parchment-dark) 100%);
+            border: 4px double var(--gold); padding: 30px; margin: 30px auto;
+            cursor: pointer; transition: transform 0.3s; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .story-envelope:hover:not(.disabled) { transform: translateY(-5px); }
+        .story-envelope.disabled { filter: grayscale(100%); opacity: 0.6; pointer-events: none; }
+        .envelope-icon { font-size: 3em; margin-bottom: 10px; color: var(--gold-dark); }
+        
+        .scroll-container { perspective: 1000px; margin: 20px 0; }
+        .scroll {
+            background: var(--parchment);
+            background-image: url('https://www.transparenttextures.com/patterns/aged-paper.png');
+            border-top: 8px solid var(--gold-dark); border-bottom: 8px solid var(--gold-dark);
+            max-height: 0; overflow: hidden;
+            animation: unroll 2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+        @keyframes unroll { to { max-height: 3000px; } }
+        .scroll-content { padding: 40px 25px; }
+        .story-text { font-size: 1.25em; line-height: 1.8; font-style: italic; text-align: justify; opacity: 0; transition: opacity 1s; }
+        .story-text.visible { opacity: 1; }
+        
+        .drawing-area {
+            background: #fff; border: 3px solid var(--gold);
+            width: 100%; height: 350px; touch-action: none;
+            cursor: crosshair; display: block; margin: 10px 0;
+            background-image: url('https://www.transparenttextures.com/patterns/sketch-pad.png');
+        }
+        .color-row { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+        .color-dot { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #ccc; cursor: pointer;}
+        .hidden { display: none !important; }
+        .daily-quote { font-style: italic; text-align: center; margin: 20px; color: var(--ink-light); }
+    </style>
+</head>
+<body>
+    <div class="background-layer" id="bgLayer"></div>
+    <div class="gold-overlay"></div>
+    <audio id="unrollSound" src="sounds/unroll.mp3" preload="auto"></audio>
+
+    <div class="header">
+        <h1>FRANZISKAS GESCHICHTENWELT</h1>
+        <p>Ein Abenteuer auf einem Bein</p>
+    </div>
+    
+    <div class="nav">
+        <button class="btn active" onclick="app.nav('home')">Start</button>
+        <button class="btn" id="btnStory" onclick="app.nav('story')" disabled>Geschichte</button>
+        <button class="btn" onclick="app.nav('diary')">Tagebuch</button>
+        <button class="btn" onclick="app.nav('progress')">Weg</button>
+    </div>
+    
+    <div class="container">
+        <div id="home" class="section active panel">
+            <h2 style="text-align: center; font-family: 'Cinzel', serif;">Willkommen, Tapfere</h2>
+            <div class="daily-quote" id="quote"></div>
+            <div class="story-envelope" id="envelope" onclick="app.openStory()">
+                <div class="envelope-icon">✦</div>
+                <h3>Deine Schriftrolle</h3>
+                <p id="envelopeMsg">Lade Abenteuer...</p>
+            </div>
+            <div id="countdown" class="daily-quote hidden"></div>
+        </div>
+
+        <div id="story" class="section">
+            <div class="scroll-container">
+                <div class="scroll" id="scrollUi">
+                    <div class="scroll-content">
+                        <h3 id="sTheme" style="text-align: center; color: var(--gold-dark);"></h3>
+                        <h2 id="sTitle" style="text-align: center; font-family: 'Cinzel', serif; margin: 20px 0;"></h2>
+                        <div id="sText" class="story-text"></div>
+                        <div style="text-align: center; margin-top: 30px;">
+                            <button class="btn" id="btnNext" onclick="reader.next()">Weiter →</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="taskArea" class="panel hidden">
+                <h3 style="color: var(--gold-dark); font-family: 'Cinzel', serif;">Deine Aufgabe</h3>
+                <p id="taskDesc" style="font-style: italic; margin: 15px 0;"></p>
+                <div id="drawMode" class="hidden">
+                    <canvas id="canvas" class="drawing-area"></canvas>
+                    <div class="color-row">
+                        <div class="color-dot" style="background: #2c241b" onclick="drawer.color('#2c241b')"></div>
+                        <div class="color-dot" style="background: #8b0000" onclick="drawer.color('#8b0000')"></div>
+                        <div class="color-dot" style="background: #d4af37" onclick="drawer.color('#d4af37')"></div>
+                        <button class="btn" onclick="drawer.clear()">Neu</button>
+                    </div>
+                    <button class="btn" style="width: 100%; margin-top: 20px; background: var(--gold); color: #fff;" onclick="drawer.save()">Bild speichern & Senden</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="diary" class="section panel">
+            <h2>Tagebuch</h2>
+            <textarea id="diaryInput" style="width: 100%; height: 150px; margin: 10px 0; background: var(--parchment); border: 1px solid var(--gold); padding: 10px;"></textarea>
+            <button class="btn" onclick="app.saveDiary()">Speichern</button>
+            <div id="diaryList" style="margin-top: 20px;"></div>
+        </div>
+
+        <div id="progress" class="section panel">
+            <h2>Dein Weg</h2>
+            <div id="stars" style="font-size: 2em; color: var(--gold); text-align: center;"></div>
+        </div>
+    </div>
+
+    <script>
+        const app = {
+            data: { stories: [], diary: [] },
+            init: async () => {
+                app.loadState();
+                app.ui.quote();
+                await app.loadStories();
+                app.checkTime();
+                drawer.init();
+            },
+            nav: (id) => {
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+            },
+            loadStories: async () => {
+                try {
+                    const res = await fetch(`stories/Week1/Story1.json`);
+                    if(res.ok) {
+                        const s = await res.json();
+                        app.data.stories.push(s);
+                        document.getElementById('bgLayer').style.backgroundImage = `url('backgrounds/1.jpg')`;
+                    }
+                } catch(e) {}
+            },
+            checkTime: () => {
+                const now = new Date();
+                const lastRead = localStorage.getItem('lastReadDate');
+                const env = document.getElementById('envelope');
+                if (lastRead === now.toDateString()) {
+                    document.getElementById('envelopeMsg').textContent = "Morgen geht's weiter!";
+                    env.classList.add('disabled');
+                } else if (now.getHours() < 12) {
+                    document.getElementById('envelopeMsg').textContent = "Öffnet um 12:00 Uhr";
+                    env.classList.add('disabled');
+                } else {
+                    document.getElementById('envelopeMsg').textContent = "Tippe zum Öffnen";
+                }
+            },
+            openStory: () => {
+                if(app.data.stories.length > 0) {
+                    app.nav('story');
+                    document.getElementById('btnStory').disabled = false;
+                    document.getElementById('unrollSound').play().catch(()=>{});
+                    reader.start(app.data.stories[0]);
+                }
+            },
+            saveDiary: () => {
+                const txt = document.getElementById('diaryInput').value;
+                if(txt) {
+                    app.data.diary.unshift({d: new Date().toLocaleDateString(), t: txt});
+                    localStorage.setItem('franziData', JSON.stringify(app.data));
+                    app.renderDiary();
+                }
+            },
+            renderDiary: () => {
+                document.getElementById('diaryList').innerHTML = app.data.diary.map(e => `<p><b>${e.d}:</b> ${e.t}</p>`).join('');
+            },
+            loadState: () => {
+                const s = localStorage.getItem('franziData');
+                if(s) { app.data = JSON.parse(s); app.renderDiary(); }
+            },
+            ui: { quote: () => { document.getElementById('quote').innerText = "Mut beginnt mit dem ersten Hüpfer."; } }
+        };
+
+        const reader = {
+            parts: [], page: 0,
+            start: (s) => {
+                reader.parts = s.text.split(/(\(\d+\))/).filter(p => p.length > 5);
+                document.getElementById('sTheme').innerText = s.theme;
+                document.getElementById('sTitle').innerText = s.title;
+                reader.show();
+            },
+            show: () => {
+                const t = document.getElementById('sText');
+                t.innerText = reader.parts[reader.page];
+                t.classList.add('visible');
+                document.getElementById('btnNext').innerText = reader.page >= reader.parts.length-1 ? "Aufgabe ✨" : "Weiter";
+            },
+            next: () => {
+                if(reader.page < reader.parts.length-1) { reader.page++; reader.show(); }
+                else { 
+                    document.getElementById('scrollUi').style.display = 'none';
+                    document.getElementById('taskArea').classList.remove('hidden');
+                    document.getElementById('taskDesc').innerText = app.data.stories[0].task;
+                    document.getElementById('drawMode').classList.remove('hidden');
+                    drawer.resize();
+                    localStorage.setItem('lastReadDate', new Date().toDateString());
+                }
+            }
+        };
+
+        const drawer = {
+            ctx: null, isD: false, col: '#2c241b',
+            init: () => {
+                const c = document.getElementById('canvas');
+                drawer.ctx = c.getContext('2d');
+                c.addEventListener('mousedown', drawer.s);
+                c.addEventListener('mousemove', drawer.m);
+                c.addEventListener('mouseup', () => drawer.isD = false);
+                c.addEventListener('touchstart', (e) => drawer.s(e.touches[0]));
+                c.addEventListener('touchmove', (e) => { e.preventDefault(); drawer.m(e.touches[0]); });
+                c.addEventListener('touchend', () => drawer.isD = false);
+            },
+            resize: () => { const c = document.getElementById('canvas'); c.width = c.offsetWidth; c.height = 350; drawer.ctx.lineCap = 'round'; drawer.ctx.lineWidth = 4; },
+            s: (e) => { drawer.isD = true; const r = canvas.getBoundingClientRect(); drawer.ctx.beginPath(); drawer.ctx.moveTo(e.clientX-r.left, e.clientY-r.top); },
+            m: (e) => { if(!drawer.isD) return; const r = canvas.getBoundingClientRect(); drawer.ctx.lineTo(e.clientX-r.left, e.clientY-r.top); drawer.ctx.strokeStyle = drawer.col; drawer.ctx.stroke(); },
+            clear: () => drawer.ctx.clearRect(0,0,1000,1000),
+            color: (c) => drawer.col = c,
+            save: () => { window.open().document.write('<img src="'+canvas.toDataURL()+'"/><h3>Bild speichern & an Kai senden!</h3>'); }
+        };
+
+        window.onload = app.init;
+    </script>
+</body>
+</html>
